@@ -2,63 +2,85 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Solar ROI Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Solar Proposal Calculator</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
 body{
-font-family:Arial;
+font-family:Arial,sans-serif;
+margin:0;
 background:#0b1d3a;
 color:white;
-padding:30px;
 }
 
 .container{
-max-width:750px;
+max-width:1000px;
 margin:auto;
-background:#142b52;
-padding:30px;
-border-radius:10px;
+padding:20px;
 }
 
 h1{
 text-align:center;
 color:#d4af37;
+margin-bottom:20px;
+}
+
+.card{
+background:#142b52;
+padding:20px;
+border-radius:10px;
+margin-bottom:20px;
+}
+
+/* INPUT GRID */
+
+.grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:12px;
+}
+
+/* INPUT FIELD */
+
+.field{
+display:flex;
+flex-direction:column;
 }
 
 label{
-font-weight:bold;
-display:block;
-margin-top:15px;
+font-size:13px;
+margin-bottom:4px;
 }
 
 input{
-width:100%;
-padding:10px;
-margin-top:5px;
+padding:8px;
 border-radius:5px;
 border:none;
+font-size:14px;
 }
 
+/* BUTTON */
+
 button{
-width:100%;
-margin-top:20px;
-padding:12px;
 background:#d4af37;
 border:none;
-font-weight:bold;
+padding:10px;
 border-radius:6px;
+font-weight:bold;
 cursor:pointer;
+margin-top:15px;
+width:200px;
 }
 
 button:hover{
-background:#caa32f;
+background:#c7a42e;
 }
 
 .results{
-margin-top:25px;
 background:#081428;
 padding:20px;
 border-radius:8px;
@@ -67,13 +89,45 @@ border-radius:8px;
 .result-title{
 color:#d4af37;
 margin-bottom:10px;
+margin-top:10px;
 }
 
 canvas{
-margin-top:25px;
+margin-top:20px;
 background:white;
 border-radius:8px;
 padding:10px;
+}
+
+.footer{
+text-align:center;
+margin-top:20px;
+font-size:12px;
+color:#bbb;
+}
+
+/* TABLET */
+
+@media(max-width:900px){
+
+.grid{
+grid-template-columns:repeat(2,1fr);
+}
+
+}
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+.grid{
+grid-template-columns:1fr;
+}
+
+button{
+width:100%;
+}
+
 }
 
 </style>
@@ -83,22 +137,52 @@ padding:10px;
 
 <div class="container">
 
-<h1>☀ Solar ROI & Plant Size Calculator</h1>
+<h1>☀ Solar Proposal Calculator</h1>
 
+<div class="card">
+
+<div class="grid">
+
+<div class="field">
+<label>Customer Name</label>
+<input id="customerName">
+</div>
+
+<div class="field">
+<label>Location</label>
+<input id="location">
+</div>
+
+<div class="field">
 <label>Monthly EB Bill (₹)</label>
-<input type="number" id="monthlyBill" placeholder="Example: 6000">
+<input type="number" id="monthlyBill">
+</div>
 
-<label>Annual Electricity Consumption (Units)</label>
-<input type="number" id="annualUnits" placeholder="Example: 7200">
+<div class="field">
+<label>Annual Units Consumption</label>
+<input type="number" id="annualUnits">
+</div>
 
-<label>Capital Cost of Solar Plant (₹)</label>
-<input type="number" id="capitalCost" placeholder="Example: 350000">
+<div class="field">
+<label>Solar Plant Capital Cost (₹)</label>
+<input type="number" id="capitalCost">
+</div>
 
-<button onclick="calculate()">Calculate</button>
+</div>
+
+<button onclick="calculate()">Calculate Proposal</button>
+
+</div>
 
 <div class="results" id="results"></div>
 
-<canvas id="savingsChart"></canvas>
+<canvas id="chart"></canvas>
+
+<button onclick="window.print()">Print / Save Proposal</button>
+
+<div class="footer">
+Solar ROI Projection – 25 Year Financial Analysis
+</div>
 
 </div>
 
@@ -116,60 +200,80 @@ maximumFractionDigits:0
 
 function calculate(){
 
-let monthlyBill = Number(document.getElementById("monthlyBill").value);
-let annualUnits = Number(document.getElementById("annualUnits").value);
-let capital = Number(document.getElementById("capitalCost").value);
+let name=document.getElementById("customerName").value;
+let city=document.getElementById("location").value;
 
-let plantKW = annualUnits / 1400;
+let monthlyBill=Number(document.getElementById("monthlyBill").value);
 
-let panelKW = 0.54;
+let annualUnits=Number(document.getElementById("annualUnits").value);
 
-let panelsNeeded = plantKW / panelKW;
+let capital=Number(document.getElementById("capitalCost").value);
 
-let panelsDown = Math.floor(panelsNeeded);
-let panelsUp = Math.ceil(panelsNeeded);
+/* SOLAR SIZE */
 
-let plantDown = panelsDown * panelKW;
-let plantUp = panelsUp * panelKW;
+let plantKW=annualUnits/1400;
 
-let unitRate = monthlyBill / (annualUnits/12);
+/* PANEL CALCULATION */
 
-let yearlyBill = monthlyBill * 12;
+let panelKW=0.54;
 
-let tariffIncrease = 0.03;
+let panelsRequired=plantKW/panelKW;
 
-let totalCost = 0;
+let panelsDown=Math.floor(panelsRequired);
+
+let panelsUp=Math.ceil(panelsRequired);
+
+let plantDown=panelsDown*panelKW;
+
+let plantUp=panelsUp*panelKW;
+
+/* ELECTRICITY RATE */
+
+let unitRate=monthlyBill/(annualUnits/12);
+
+/* FINANCIAL */
+
+let yearlyBill=monthlyBill*12;
+
+let tariffIncrease=0.03;
+
+let totalCost=0;
 
 let labels=[];
-let savingsData=[];
 
-for(let year=1; year<=25; year++){
+let savings=[];
 
-yearlyBill = yearlyBill*(1+tariffIncrease);
+for(let year=1;year<=25;year++){
 
-totalCost += yearlyBill;
+yearlyBill=yearlyBill*(1+tariffIncrease);
 
-let savings = totalCost-capital;
+totalCost+=yearlyBill;
 
 labels.push("Year "+year);
-savingsData.push(Math.max(savings,0));
+
+savings.push(Math.max(totalCost-capital,0));
 
 }
 
-let payback = capital/(monthlyBill*12);
+/* PAYBACK */
 
-let resultsHTML = `
+let payback=capital/(monthlyBill*12);
+
+/* RESULTS */
+
+document.getElementById("results").innerHTML=`
+
+<div class="result-title"><b>Customer</b></div>
+${name} – ${city}
 
 <div class="result-title"><b>Electricity Details</b></div>
 
 Monthly EB Bill: ${formatINR(monthlyBill)}<br>
 Estimated Unit Rate: ₹${unitRate.toFixed(2)} / unit
 
-<br><br>
+<div class="result-title"><b>Solar System Size</b></div>
 
-<div class="result-title"><b>Solar Plant Size</b></div>
-
-Ideal Plant Size: ${plantKW.toFixed(2)} kW
+Ideal System Size: ${plantKW.toFixed(2)} kW
 
 <br><br>
 
@@ -183,8 +287,6 @@ Plant Size: ${plantDown.toFixed(2)} kW
 Panels: ${panelsUp}<br>
 Plant Size: ${plantUp.toFixed(2)} kW
 
-<br><br>
-
 <div class="result-title"><b>Financial Analysis</b></div>
 
 Capital Investment: ${formatINR(capital)}<br>
@@ -197,27 +299,27 @@ Payback Period: ${payback.toFixed(1)} years
 
 <br><br>
 
-<span style="color:#4ade80;font-size:18px">
+<span style="color:#4ade80;font-size:20px">
 Total Savings in 25 Years: ${formatINR(totalCost-capital)}
 </span>
 
 `;
 
-document.getElementById("results").innerHTML = resultsHTML;
+/* CHART */
 
 if(chart){
 chart.destroy();
 }
 
-chart = new Chart(document.getElementById("savingsChart"),{
+chart=new Chart(document.getElementById("chart"),{
 
 type:"line",
 
 data:{
 labels:labels,
 datasets:[{
-label:"25 Year Savings Projection",
-data:savingsData,
+label:"Savings Over 25 Years",
+data:savings,
 borderWidth:3,
 fill:true
 }]
