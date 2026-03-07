@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Solar ROI Calculator</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#0b1d3a;
+color:white;
+padding:30px;
+}
+
+.container{
+max-width:750px;
+margin:auto;
+background:#142b52;
+padding:30px;
+border-radius:10px;
+}
+
+h1{
+text-align:center;
+color:#d4af37;
+}
+
+label{
+font-weight:bold;
+display:block;
+margin-top:15px;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:5px;
+border-radius:5px;
+border:none;
+}
+
+button{
+width:100%;
+margin-top:20px;
+padding:12px;
+background:#d4af37;
+border:none;
+font-weight:bold;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#caa32f;
+}
+
+.results{
+margin-top:25px;
+background:#081428;
+padding:20px;
+border-radius:8px;
+}
+
+.result-title{
+color:#d4af37;
+margin-bottom:10px;
+}
+
+canvas{
+margin-top:25px;
+background:white;
+border-radius:8px;
+padding:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>☀ Solar ROI & Plant Size Calculator</h1>
+
+<label>Monthly EB Bill (₹)</label>
+<input type="number" id="monthlyBill" placeholder="Example: 6000">
+
+<label>Annual Electricity Consumption (Units)</label>
+<input type="number" id="annualUnits" placeholder="Example: 7200">
+
+<label>Capital Cost of Solar Plant (₹)</label>
+<input type="number" id="capitalCost" placeholder="Example: 350000">
+
+<button onclick="calculate()">Calculate</button>
+
+<div class="results" id="results"></div>
+
+<canvas id="savingsChart"></canvas>
+
+</div>
+
+<script>
+
+let chart;
+
+function formatINR(num){
+return num.toLocaleString("en-IN",{
+style:"currency",
+currency:"INR",
+maximumFractionDigits:0
+});
+}
+
+function calculate(){
+
+let monthlyBill = Number(document.getElementById("monthlyBill").value);
+let annualUnits = Number(document.getElementById("annualUnits").value);
+let capital = Number(document.getElementById("capitalCost").value);
+
+let plantKW = annualUnits / 1400;
+
+let panelKW = 0.54;
+
+let panelsNeeded = plantKW / panelKW;
+
+let panelsDown = Math.floor(panelsNeeded);
+let panelsUp = Math.ceil(panelsNeeded);
+
+let plantDown = panelsDown * panelKW;
+let plantUp = panelsUp * panelKW;
+
+let unitRate = monthlyBill / (annualUnits/12);
+
+let yearlyBill = monthlyBill * 12;
+
+let tariffIncrease = 0.03;
+
+let totalCost = 0;
+
+let labels=[];
+let savingsData=[];
+
+for(let year=1; year<=25; year++){
+
+yearlyBill = yearlyBill*(1+tariffIncrease);
+
+totalCost += yearlyBill;
+
+let savings = totalCost-capital;
+
+labels.push("Year "+year);
+savingsData.push(Math.max(savings,0));
+
+}
+
+let payback = capital/(monthlyBill*12);
+
+let resultsHTML = `
+
+<div class="result-title"><b>Electricity Details</b></div>
+
+Monthly EB Bill: ${formatINR(monthlyBill)}<br>
+Estimated Unit Rate: ₹${unitRate.toFixed(2)} / unit
+
+<br><br>
+
+<div class="result-title"><b>Solar Plant Size</b></div>
+
+Ideal Plant Size: ${plantKW.toFixed(2)} kW
+
+<br><br>
+
+<b>Round Down System</b><br>
+Panels: ${panelsDown}<br>
+Plant Size: ${plantDown.toFixed(2)} kW
+
+<br><br>
+
+<b>Round Up System</b><br>
+Panels: ${panelsUp}<br>
+Plant Size: ${plantUp.toFixed(2)} kW
+
+<br><br>
+
+<div class="result-title"><b>Financial Analysis</b></div>
+
+Capital Investment: ${formatINR(capital)}<br>
+
+Payback Period: ${payback.toFixed(1)} years
+
+<br><br>
+
+25 Year Electricity Cost: ${formatINR(totalCost)}
+
+<br><br>
+
+<span style="color:#4ade80;font-size:18px">
+Total Savings in 25 Years: ${formatINR(totalCost-capital)}
+</span>
+
+`;
+
+document.getElementById("results").innerHTML = resultsHTML;
+
+if(chart){
+chart.destroy();
+}
+
+chart = new Chart(document.getElementById("savingsChart"),{
+
+type:"line",
+
+data:{
+labels:labels,
+datasets:[{
+label:"25 Year Savings Projection",
+data:savingsData,
+borderWidth:3,
+fill:true
+}]
+},
+
+options:{
+scales:{
+y:{
+ticks:{
+callback:function(value){
+return "₹"+value.toLocaleString("en-IN");
+}
+}
+}
+}
+}
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
