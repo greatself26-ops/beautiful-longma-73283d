@@ -1,347 +1,384 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Solar Proposal Calculator</title>
+<title>Solar ROI Calculator</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 
+:root{
+--blue:#0b1d3a;
+--card:#142b52;
+--gold:#d4af37;
+}
+
 body{
-font-family:Arial,sans-serif;
 margin:0;
-background:#0b1d3a;
+font-family:Arial;
+background:var(--blue);
 color:white;
 }
 
 .container{
-max-width:1000px;
+max-width:850px;
 margin:auto;
-padding:20px;
+padding:25px;
 }
 
 h1{
 text-align:center;
-color:#d4af37;
+color:var(--gold);
 margin-bottom:20px;
 }
 
+/* CARD */
+
 .card{
-background:#142b52;
+background:var(--card);
 padding:20px;
 border-radius:10px;
 margin-bottom:20px;
 }
 
-/* INPUT GRID */
-
-.grid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:12px;
-}
-
-/* INPUT FIELD */
-
-.field{
-display:flex;
-flex-direction:column;
-}
+/* INPUTS */
 
 label{
-font-size:13px;
-margin-bottom:4px;
-}
-
-input{
-padding:8px;
-border-radius:5px;
-border:none;
+display:block;
+margin-top:8px;
 font-size:14px;
 }
 
-/* BUTTON */
-
-button{
-background:#d4af37;
+input{
+padding:5px;
+border-radius:4px;
 border:none;
-padding:10px;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer;
-margin-top:15px;
-width:200px;
+text-align:center;
+font-size:13px;
 }
 
-button:hover{
-background:#c7a42e;
-}
+/* INPUT TABLE */
 
-.results{
-background:#081428;
-padding:20px;
-border-radius:8px;
-}
-
-.result-title{
-color:#d4af37;
-margin-bottom:10px;
+.input-table{
+width:100%;
+border-collapse:collapse;
 margin-top:10px;
 }
 
-canvas{
-margin-top:20px;
-background:white;
-border-radius:8px;
-padding:10px;
-}
-
-.footer{
+.input-table th,
+.input-table td{
+border:1px solid #555;
+padding:5px;
 text-align:center;
-margin-top:20px;
-font-size:12px;
-color:#bbb;
 }
 
-/* TABLET */
-
-@media(max-width:900px){
-
-.grid{
-grid-template-columns:repeat(2,1fr);
+.input-table th{
+background:var(--gold);
+color:black;
 }
 
+.input-table input{
+width:70px;
+height:22px;
 }
 
-/* MOBILE */
+/* BUTTONS */
 
-@media(max-width:600px){
-
-.grid{
-grid-template-columns:1fr;
+.buttons{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+margin-top:12px;
 }
 
 button{
+flex:1;
+padding:7px;
+border:none;
+border-radius:5px;
+background:var(--gold);
+font-weight:bold;
+cursor:pointer;
+font-size:13px;
+}
+
+/* REPORT */
+
+.report{
+background:#081428;
+padding:15px;
+border-radius:8px;
+margin-top:15px;
+}
+
+/* RESULT TABLE */
+
+.result-table{
 width:100%;
+border-collapse:collapse;
+font-size:14px;
+}
+
+.result-table th,
+.result-table td{
+border:1px solid #555;
+padding:6px;
+text-align:center;
+}
+
+.result-table th{
+background:var(--gold);
+color:black;
+}
+
+.highlight{
+color:#4ade80;
+font-weight:bold;
+}
+
+/* CHART */
+
+canvas{
+background:white;
+border-radius:6px;
+margin-top:15px;
+padding:6px;
+width:100% !important;
+}
+
+/* PRINT */
+
+@media print{
+
+.card,
+.buttons{
+display:none;
+}
+
+body{
+background:white;
+color:black;
 }
 
 }
 
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
 
-<h1>☀ Solar Proposal Calculator</h1>
+<h1>☀ Solar ROI Calculator</h1>
 
 <div class="card">
 
-<div class="grid">
+<label>Name</label>
+<input id="name" style="width:200px">
 
-<div class="field">
-<label>Customer Name</label>
-<input id="customerName">
+<label>Mobile Number</label>
+<input id="mobile" style="width:200px">
+
+<table class="input-table">
+
+<tr>
+<th>Period</th>
+<th>Units</th>
+<th>EB Bill (₹)</th>
+</tr>
+
+<tr><td>P1</td><td><input id="u1"></td><td><input id="b1"></td></tr>
+<tr><td>P2</td><td><input id="u2"></td><td><input id="b2"></td></tr>
+<tr><td>P3</td><td><input id="u3"></td><td><input id="b3"></td></tr>
+<tr><td>P4</td><td><input id="u4"></td><td><input id="b4"></td></tr>
+<tr><td>P5</td><td><input id="u5"></td><td><input id="b5"></td></tr>
+<tr><td>P6</td><td><input id="u6"></td><td><input id="b6"></td></tr>
+
+</table>
+
+<label>Solar Plant Cost (₹)</label>
+<input id="plantCost" style="width:150px">
+
+<div class="buttons">
+
+<button onclick="calculate()">Calculate</button>
+
+<button onclick="generatePDF()">Download PDF</button>
+
+<button onclick="shareWhatsApp()">WhatsApp</button>
+
+<button onclick="window.print()">Print</button>
+
 </div>
 
-<div class="field">
-<label>Location</label>
-<input id="location">
 </div>
 
-<div class="field">
-<label>Monthly EB Bill (₹)</label>
-<input type="number" id="monthlyBill">
-</div>
+<div id="report" class="report">
 
-<div class="field">
-<label>Annual Units Consumption</label>
-<input type="number" id="annualUnits">
-</div>
+<div id="results"></div>
 
-<div class="field">
-<label>Solar Plant Capital Cost (₹)</label>
-<input type="number" id="capitalCost">
-</div>
+<canvas id="historyChart"></canvas>
 
-</div>
+<canvas id="roiChart"></canvas>
 
-<button onclick="calculate()">Calculate Proposal</button>
-
-</div>
-
-<div class="results" id="results"></div>
-
-<canvas id="chart"></canvas>
-
-<button onclick="window.print()">Print / Save Proposal</button>
-
-<div class="footer">
-Solar ROI Projection – 25 Year Financial Analysis
 </div>
 
 </div>
 
 <script>
 
-let chart;
+let roiChart;
+let historyChart;
 
-function formatINR(num){
-return num.toLocaleString("en-IN",{
-style:"currency",
-currency:"INR",
-maximumFractionDigits:0
-});
+function inr(x){
+return x.toLocaleString("en-IN",{style:"currency",currency:"INR"})
 }
 
 function calculate(){
 
-let name=document.getElementById("customerName").value;
-let city=document.getElementById("location").value;
+let units=[+u1.value,+u2.value,+u3.value,+u4.value,+u5.value,+u6.value];
+let bills=[+b1.value,+b2.value,+b3.value,+b4.value,+b5.value,+b6.value];
 
-let monthlyBill=Number(document.getElementById("monthlyBill").value);
+let labels=["P1","P2","P3","P4","P5","P6"];
 
-let annualUnits=Number(document.getElementById("annualUnits").value);
+let annualUnits=units.reduce((a,b)=>a+b,0);
+let totalBill=bills.reduce((a,b)=>a+b,0);
 
-let capital=Number(document.getElementById("capitalCost").value);
-
-/* SOLAR SIZE */
+let unitCost=totalBill/annualUnits;
 
 let plantKW=annualUnits/1400;
 
-/* PANEL CALCULATION */
-
 let panelKW=0.54;
 
-let panelsRequired=plantKW/panelKW;
+let panels=Math.ceil(plantKW/panelKW);
 
-let panelsDown=Math.floor(panelsRequired);
+let panelArea=27.64;
 
-let panelsUp=Math.ceil(panelsRequired);
+let space=panels*panelArea;
 
-let plantDown=panelsDown*panelKW;
+let co2=(annualUnits*25*0.82)/1000;
 
-let plantUp=panelsUp*panelKW;
+let capital=+plantCost.value;
 
-/* ELECTRICITY RATE */
+let yearlyCost=totalBill;
 
-let unitRate=monthlyBill/(annualUnits/12);
-
-/* FINANCIAL */
-
-let yearlyBill=monthlyBill*12;
-
-let tariffIncrease=0.03;
+let tariffRise=0.07;
 
 let totalCost=0;
 
-let labels=[];
-
+let roiLabels=[];
 let savings=[];
 
-for(let year=1;year<=25;year++){
+for(let i=1;i<=25;i++){
 
-yearlyBill=yearlyBill*(1+tariffIncrease);
+yearlyCost*=1+tariffRise;
 
-totalCost+=yearlyBill;
+totalCost+=yearlyCost;
 
-labels.push("Year "+year);
+roiLabels.push("Year "+i);
 
-savings.push(Math.max(totalCost-capital,0));
+savings.push(totalCost-capital);
 
 }
 
-/* PAYBACK */
+results.innerHTML=`
 
-let payback=capital/(monthlyBill*12);
+<table class="result-table">
 
-/* RESULTS */
+<tr><th colspan="2">Solar Analysis</th></tr>
 
-document.getElementById("results").innerHTML=`
+<tr><td>Annual EB Consumption</td><td>${annualUnits} Units</td></tr>
 
-<div class="result-title"><b>Customer</b></div>
-${name} – ${city}
+<tr><td>Cost Per Unit</td><td>₹${unitCost.toFixed(2)}</td></tr>
 
-<div class="result-title"><b>Electricity Details</b></div>
+<tr><td>Solar Plant Size</td><td>${plantKW.toFixed(2)} kW</td></tr>
 
-Monthly EB Bill: ${formatINR(monthlyBill)}<br>
-Estimated Unit Rate: ₹${unitRate.toFixed(2)} / unit
+<tr><td>Panels Required</td><td>${panels}</td></tr>
 
-<div class="result-title"><b>Solar System Size</b></div>
+<tr><td>Roof Space Required</td><td>${space.toFixed(0)} sq.ft</td></tr>
 
-Ideal System Size: ${plantKW.toFixed(2)} kW
+<tr><td>CO₂ Saved</td><td>${co2.toFixed(1)} Tons</td></tr>
 
-<br><br>
+<tr><td>25 Year Electricity Cost</td><td>${inr(totalCost)}</td></tr>
 
-<b>Round Down System</b><br>
-Panels: ${panelsDown}<br>
-Plant Size: ${plantDown.toFixed(2)} kW
+<tr><td class="highlight">Total Savings</td><td class="highlight">${inr(totalCost-capital)}</td></tr>
 
-<br><br>
-
-<b>Round Up System</b><br>
-Panels: ${panelsUp}<br>
-Plant Size: ${plantUp.toFixed(2)} kW
-
-<div class="result-title"><b>Financial Analysis</b></div>
-
-Capital Investment: ${formatINR(capital)}<br>
-
-Payback Period: ${payback.toFixed(1)} years
-
-<br><br>
-
-25 Year Electricity Cost: ${formatINR(totalCost)}
-
-<br><br>
-
-<span style="color:#4ade80;font-size:20px">
-Total Savings in 25 Years: ${formatINR(totalCost-capital)}
-</span>
+</table>
 
 `;
 
-/* CHART */
+const ctx1=document.getElementById("historyChart");
 
-if(chart){
-chart.destroy();
-}
+if(historyChart) historyChart.destroy();
 
-chart=new Chart(document.getElementById("chart"),{
-
-type:"line",
-
+historyChart=new Chart(ctx1,{
+type:"bar",
 data:{
 labels:labels,
+datasets:[
+{label:"Units",data:units,backgroundColor:"#d4af37"},
+{label:"EB Bill",data:bills,backgroundColor:"#4ade80"}
+]
+}
+});
+
+const ctx2=document.getElementById("roiChart");
+
+if(roiChart) roiChart.destroy();
+
+roiChart=new Chart(ctx2,{
+type:"line",
+data:{
+labels:roiLabels,
 datasets:[{
 label:"Savings Over 25 Years",
 data:savings,
+borderColor:"#d4af37",
 borderWidth:3,
 fill:true
 }]
-},
-
-options:{
-scales:{
-y:{
-ticks:{
-callback:function(value){
-return "₹"+value.toLocaleString("en-IN");
 }
-}
-}
-}
-}
-
 });
+
+}
+
+async function generatePDF(){
+
+const { jsPDF } = window.jspdf;
+
+const element=document.getElementById("report");
+
+const canvas=await html2canvas(element,{scale:2});
+
+const img=canvas.toDataURL("image/png");
+
+const pdf=new jsPDF("p","mm","a4");
+
+const width=210;
+const height=canvas.height*width/canvas.width;
+
+pdf.addImage(img,"PNG",0,10,width,height);
+
+pdf.save("solar-roi-report.pdf");
+
+}
+
+function shareWhatsApp(){
+
+window.open("https://wa.me/?text=Solar ROI report generated. Please attach the PDF");
 
 }
 
 </script>
 
 </body>
+
 </html>
