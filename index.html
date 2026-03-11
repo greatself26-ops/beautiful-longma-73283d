@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Solar ROI Calculator</title>
+<title>Solar ROI Analyzer</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -14,46 +14,38 @@
 
 <style>
 
-:root{
---blue:#0b1d3a;
---card:#142b52;
---gold:#d4af37;
-}
-
 body{
 margin:0;
 font-family:Arial;
-background:var(--blue);
+background:linear-gradient(135deg,#020617,#0b1d3a);
 color:white;
 }
 
 .container{
-max-width:850px;
+max-width:900px;
 margin:auto;
 padding:25px;
 }
 
 h1{
 text-align:center;
-color:var(--gold);
+color:#FFD700;
+letter-spacing:2px;
 margin-bottom:20px;
 }
-
-/* CARD */
 
 .card{
-background:var(--card);
+background:rgba(20,43,82,0.9);
 padding:20px;
-border-radius:10px;
+border-radius:12px;
+box-shadow:0 0 20px rgba(255,215,0,0.25);
 margin-bottom:20px;
 }
-
-/* INPUTS */
 
 label{
 display:block;
-margin-top:8px;
-font-size:14px;
+margin-top:10px;
+font-size:13px;
 }
 
 input{
@@ -64,8 +56,6 @@ text-align:center;
 font-size:13px;
 }
 
-/* INPUT TABLE */
-
 .input-table{
 width:100%;
 border-collapse:collapse;
@@ -74,22 +64,19 @@ margin-top:10px;
 
 .input-table th,
 .input-table td{
-border:1px solid #555;
-padding:5px;
+border:1px solid #444;
+padding:4px;
 text-align:center;
 }
 
 .input-table th{
-background:var(--gold);
+background:#FFD700;
 color:black;
 }
 
 .input-table input{
-width:70px;
-height:22px;
+width:65px;
 }
-
-/* BUTTONS */
 
 .buttons{
 display:flex;
@@ -102,23 +89,24 @@ button{
 flex:1;
 padding:7px;
 border:none;
-border-radius:5px;
-background:var(--gold);
+border-radius:6px;
+background:#FFD700;
 font-weight:bold;
 cursor:pointer;
-font-size:13px;
+transition:0.3s;
 }
 
-/* REPORT */
+button:hover{
+transform:scale(1.05);
+box-shadow:0 0 12px #FFD700;
+}
 
 .report{
-background:#081428;
+background:#020617;
 padding:15px;
-border-radius:8px;
+border-radius:10px;
 margin-top:15px;
 }
-
-/* RESULT TABLE */
 
 .result-table{
 width:100%;
@@ -128,13 +116,13 @@ font-size:14px;
 
 .result-table th,
 .result-table td{
-border:1px solid #555;
+border:1px solid #444;
 padding:6px;
 text-align:center;
 }
 
 .result-table th{
-background:var(--gold);
+background:#FFD700;
 color:black;
 }
 
@@ -143,22 +131,17 @@ color:#4ade80;
 font-weight:bold;
 }
 
-/* CHART */
-
 canvas{
 background:white;
-border-radius:6px;
+border-radius:8px;
 margin-top:15px;
-padding:6px;
+padding:8px;
 width:100% !important;
 }
 
-/* PRINT */
-
 @media print{
 
-.card,
-.buttons{
+.card,.buttons{
 display:none;
 }
 
@@ -177,14 +160,14 @@ color:black;
 
 <div class="container">
 
-<h1>☀ Solar ROI Calculator</h1>
+<h1>☀ SOLAR ROI ANALYZER</h1>
 
 <div class="card">
 
 <label>Name</label>
 <input id="name" style="width:200px">
 
-<label>Mobile Number</label>
+<label>Mobile</label>
 <input id="mobile" style="width:200px">
 
 <table class="input-table">
@@ -192,7 +175,7 @@ color:black;
 <tr>
 <th>Period</th>
 <th>Units</th>
-<th>EB Bill (₹)</th>
+<th>EB Bill</th>
 </tr>
 
 <tr><td>P1</td><td><input id="u1"></td><td><input id="b1"></td></tr>
@@ -209,12 +192,9 @@ color:black;
 
 <div class="buttons">
 
-<button onclick="calculate()">Calculate</button>
-
+<button onclick="calculate()">Analyze</button>
 <button onclick="generatePDF()">Download PDF</button>
-
 <button onclick="shareWhatsApp()">WhatsApp</button>
-
 <button onclick="window.print()">Print</button>
 
 </div>
@@ -242,6 +222,14 @@ function inr(x){
 return x.toLocaleString("en-IN",{style:"currency",currency:"INR"})
 }
 
+function subsidyCalc(kW){
+
+if(kW<=2) return kW*30000
+if(kW<=3) return 60000+18000
+return 78000
+
+}
+
 function calculate(){
 
 let units=[+u1.value,+u2.value,+u3.value,+u4.value,+u5.value,+u6.value];
@@ -258,15 +246,26 @@ let plantKW=annualUnits/1400;
 
 let panelKW=0.54;
 
-let panels=Math.ceil(plantKW/panelKW);
+let panelsRequired=plantKW/panelKW;
+
+let panelsDown=Math.floor(panelsRequired);
+let panelsUp=Math.ceil(panelsRequired);
+
+let plantDown=panelsDown*panelKW;
+let plantUp=panelsUp*panelKW;
 
 let panelArea=27.64;
 
-let space=panels*panelArea;
+let spaceDown=panelsDown*panelArea;
+let spaceUp=panelsUp*panelArea;
 
-let co2=(annualUnits*25*0.82)/1000;
+let plantCost=+plantCostInput();
 
-let capital=+plantCost.value;
+let subsidy=subsidyCalc(plantUp);
+
+let netCost=plantCost-subsidy;
+
+/* ROI */
 
 let yearlyCost=totalBill;
 
@@ -285,7 +284,7 @@ totalCost+=yearlyCost;
 
 roiLabels.push("Year "+i);
 
-savings.push(totalCost-capital);
+savings.push(totalCost-netCost);
 
 }
 
@@ -293,23 +292,31 @@ results.innerHTML=`
 
 <table class="result-table">
 
-<tr><th colspan="2">Solar Analysis</th></tr>
+<tr><th colspan="2">Solar System Analysis</th></tr>
 
-<tr><td>Annual EB Consumption</td><td>${annualUnits} Units</td></tr>
+<tr><td>Annual Consumption</td><td>${annualUnits} Units</td></tr>
+
+<tr><td>Annual EB Bill</td><td>${inr(totalBill)}</td></tr>
 
 <tr><td>Cost Per Unit</td><td>₹${unitCost.toFixed(2)}</td></tr>
 
 <tr><td>Solar Plant Size</td><td>${plantKW.toFixed(2)} kW</td></tr>
 
-<tr><td>Panels Required</td><td>${panels}</td></tr>
+<tr><td>Round Down System</td><td>${panelsDown} Panels (${plantDown.toFixed(2)} kW)</td></tr>
 
-<tr><td>Roof Space Required</td><td>${space.toFixed(0)} sq.ft</td></tr>
+<tr><td>Round Up System</td><td>${panelsUp} Panels (${plantUp.toFixed(2)} kW)</td></tr>
 
-<tr><td>CO₂ Saved</td><td>${co2.toFixed(1)} Tons</td></tr>
+<tr><td>Roof Space</td><td>${spaceDown.toFixed(0)} – ${spaceUp.toFixed(0)} sq.ft</td></tr>
+
+<tr><td>Plant Cost</td><td>${inr(plantCost)}</td></tr>
+
+<tr><td>Govt Subsidy</td><td>${inr(subsidy)}</td></tr>
+
+<tr><td>Net Investment</td><td>${inr(netCost)}</td></tr>
 
 <tr><td>25 Year Electricity Cost</td><td>${inr(totalCost)}</td></tr>
 
-<tr><td class="highlight">Total Savings</td><td class="highlight">${inr(totalCost-capital)}</td></tr>
+<tr><td class="highlight">Total Savings</td><td class="highlight">${inr(totalCost-netCost)}</td></tr>
 
 </table>
 
@@ -324,8 +331,8 @@ type:"bar",
 data:{
 labels:labels,
 datasets:[
-{label:"Units",data:units,backgroundColor:"#d4af37"},
-{label:"EB Bill",data:bills,backgroundColor:"#4ade80"}
+{label:"Units",data:units,backgroundColor:"#FFD700"},
+{label:"EB Bill",data:bills,backgroundColor:"#22c55e"}
 ]
 }
 });
@@ -341,13 +348,17 @@ labels:roiLabels,
 datasets:[{
 label:"Savings Over 25 Years",
 data:savings,
-borderColor:"#d4af37",
+borderColor:"#FFD700",
 borderWidth:3,
 fill:true
 }]
 }
 });
 
+}
+
+function plantCostInput(){
+return document.getElementById("plantCost").value
 }
 
 async function generatePDF(){
